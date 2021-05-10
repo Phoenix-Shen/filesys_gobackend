@@ -6,6 +6,7 @@ import (
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/beego/beego/v2/core/logs"
+	"github.com/beego/beego/v2/server/web"
 )
 
 //对象存储客户端，可以使用成员变量client来进行原始操作。
@@ -17,30 +18,37 @@ type OSSClient struct {
 }
 
 //定义的OSS客户端在controller层就使用这个东西
-var ossclient OSSClient
+var Ossclient OSSClient
 
 //初始化OSS客户端
 func init() {
 	logs.Info("OSS client initializing......")
-	ossclient = OSSClient{
+
+	endpoint, _ := web.AppConfig.String("endpoint")
+	accesskeyid, _ := web.AppConfig.String("accesskeyid")
+	accesskeysecret, _ := web.AppConfig.String("accesskeysecret")
+	logs.Info("read endpoint :", endpoint)
+	logs.Info("accesskeyid :", accesskeyid)
+	logs.Info("accesskeysecret :", accesskeysecret)
+	Ossclient = OSSClient{
 		//杭州 华东1节点 ID：oss-cn-hangzhou
-		endPoint:        "oss-cn-hangzhou.aliyuncs.com",
-		accessKeyID:     "SBSBSBSBSBBSBS",
-		accessKeySecret: "ASDFSDAFSAGARSHGJJSJKREHWAGJHKJAHSKG",
+		endPoint:        endpoint,
+		accessKeyID:     accesskeyid,
+		accessKeySecret: accesskeysecret,
 	}
 	//新建客户端 在这里没有填写option 可以查看oss.clientoption中有哪些成员
 	var err error
-	ossclient.client, err = oss.New(ossclient.endPoint, ossclient.accessKeyID, ossclient.accessKeySecret)
+	Ossclient.client, err = oss.New(Ossclient.endPoint, Ossclient.accessKeyID, Ossclient.accessKeySecret)
 	//出错就退出了
 	if err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(-1)
+		//os.Exit(-1)
 	}
 	logs.Info("OSS client OK!")
 }
 
 //创建bucket，bucket的命名应该要有规范，需要在前端限制
-func (o *OSSClient) CreateBucket(bucketName string) {
+func (o *OSSClient) CreateBucket(bucketName string) bool {
 	isExist, err := o.client.IsBucketExist(bucketName)
 
 	if err != nil {
@@ -49,13 +57,15 @@ func (o *OSSClient) CreateBucket(bucketName string) {
 
 	if isExist {
 		logs.Info("bucket aleady exists")
-		return
+		return false
 	}
 
 	err = o.client.CreateBucket(bucketName)
 	if err != nil {
 		handleError(err)
 	}
+
+	return true
 }
 
 //上传文件
