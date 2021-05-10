@@ -2,7 +2,7 @@
 写GO后端还不如睡大觉
 
 # 换代理
-git config --global http.proxy http://127.0.0.1:8889
+git config --global http.proxy http://127.0.0.1:8889 <br>
 git config --global --unset http.proxy
 
 # 使用方法

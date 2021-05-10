@@ -41,7 +41,18 @@ func init() {
 
 //创建bucket，bucket的命名应该要有规范，需要在前端限制
 func (o *OSSClient) CreateBucket(bucketName string) {
-	err := o.client.CreateBucket(bucketName)
+	isExist, err := o.client.IsBucketExist(bucketName)
+
+	if err != nil {
+		handleError(err)
+	}
+
+	if isExist {
+		logs.Info("bucket aleady exists")
+		return
+	}
+
+	err = o.client.CreateBucket(bucketName)
 	if err != nil {
 		handleError(err)
 	}
@@ -133,4 +144,22 @@ func (o *OSSClient) DeleteFile(bucketName string, objectName string) {
 func handleError(err error) {
 	logs.Info("error encountered：", err.Error())
 	os.Exit(-1)
+}
+
+//获取存储空间的信息
+//https://help.aliyun.com/document_detail/145680.html?spm=a2c4g.11186623.6.1356.604743e1suvwE2
+func (o *OSSClient) GetInfo(bucketName string) {
+	res, err := o.client.GetBucketInfo("<yourBucketName>")
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(-1)
+	}
+	fmt.Println("BucketInfo.Location: ", res.BucketInfo.Location)
+	fmt.Println("BucketInfo.CreationDate: ", res.BucketInfo.CreationDate)
+	fmt.Println("BucketInfo.ACL: ", res.BucketInfo.ACL)
+	fmt.Println("BucketInfo.Owner: ", res.BucketInfo.Owner)
+	fmt.Println("BucketInfo.StorageClass: ", res.BucketInfo.StorageClass)
+	fmt.Println("BucketInfo.RedundancyType: ", res.BucketInfo.RedundancyType)
+	fmt.Println("BucketInfo.ExtranetEndpoint: ", res.BucketInfo.ExtranetEndpoint)
+	fmt.Println("BucketInfo.IntranetEndpoint: ", res.BucketInfo.IntranetEndpoint)
 }
