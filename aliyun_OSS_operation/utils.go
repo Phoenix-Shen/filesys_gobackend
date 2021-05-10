@@ -159,7 +159,7 @@ func handleError(err error) {
 //获取存储空间的信息
 //https://help.aliyun.com/document_detail/145680.html?spm=a2c4g.11186623.6.1356.604743e1suvwE2
 func (o *OSSClient) GetInfo(bucketName string) {
-	res, err := o.client.GetBucketInfo("<yourBucketName>")
+	res, err := o.client.GetBucketInfo(bucketName)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(-1)

@@ -29,3 +29,17 @@ func (f *FileSystemController) Post() {
 	}
 	f.ServeJSON()
 }
+
+// @Title GetInfo
+// @Description get all information
+// @Param	uid		path 	string	true		"The uid you want to delete"
+// @Success 200 succeed
+// @Failure 403 bucket name is empty
+// @router /info/:bucketname [get]
+func (f *FileSystemController) GetInfo() {
+	bucketName := f.GetString(":bucketname")
+	print("bucketName是", bucketName, "\n")
+	aliyun_OSS_operation.Ossclient.GetInfo(bucketName)
+	f.Data["json"] = "succeed"
+	f.ServeJSON()
+}
