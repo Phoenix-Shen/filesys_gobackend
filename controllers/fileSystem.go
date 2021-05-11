@@ -3,6 +3,9 @@ package controllers
 import (
 	"FileSys/aliyun_OSS_operation"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -36,13 +39,13 @@ func (f *FileSystemController) Post() {
 	f.ServeJSON()
 }
 
-// @Title GetInfo
+// @Title GetBucketInfo
 // @Description get all information
-// @Param	uid		path 	string	true		"The uid you want to delete"
+// @Param	bucketname		path 	string	true		"the bucket info you want to get"
 // @Success 200 succeed
 // @Failure 403 bucket name is empty
 // @router /info/:bucketname [get]
-func (f *FileSystemController) GetInfo() {
+func (f *FileSystemController) GetBucketInfo() {
 	bucketName := f.GetString(":bucketname")
 	//print("bucketName是", bucketName, "\n")
 	bucketInfo := aliyun_OSS_operation.Ossclient.GetInfo(bucketName)
@@ -88,7 +91,7 @@ func (f *FileSystemController) UploadFile() {
 // @Title GetFilesList
 // @Description get files by bucketname
 // @Param	bucketName		path 	string	true		"bucketname of the filelist"
-// @Success 200 {object} list.List
+// @Success 200 list.List
 // @Failure 403 :bucketName is empty
 // @router /getFileList/:bucketName [get]
 func (f *FileSystemController) GetFileList() {
@@ -107,7 +110,29 @@ func (f *FileSystemController) GetFileList() {
 // @Failure 403 :bucketName or filename error
 // @router /download [get]
 func (f *FileSystemController) DownloadFiles() {
-	fileName := f.GetString(":fileName")
-	bucketName := f.GetString(":bucketName")
-	print(fileName, bucketName)
+	fileName := f.GetString("fileName")
+	bucketName := f.GetString("bucketName")
+	//print(fileName, bucketName)
+	// 获取存储空间。
+	bucket := aliyun_OSS_operation.Ossclient.GetBucket(bucketName)
+
+	// 下载文件到流。
+	body, err := bucket.GetObject(fileName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(-1)
+	}
+
+	// 数据读取完成后，获取的流必须关闭，否则会造成连接泄漏，导致请求无连接可用，程序无法正常工作。
+	defer body.Close()
+
+	data, err := ioutil.ReadAll(body)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(-1)
+	}
+	//fmt.Println("data:", string(data))
+	f.Ctx.ResponseWriter.Header().Add("content-type", "application/octet-stream;charset=utf-8")
+	f.Ctx.ResponseWriter.Header().Add("Content-Disposition", "attachement;filename=\""+fileName+"\"")
+	f.Ctx.ResponseWriter.Write(data)
 }

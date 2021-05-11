@@ -36,7 +36,7 @@ func init() {
 
     beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
         beego.ControllerComments{
-            Method: "GetInfo",
+            Method: "GetBucketInfo",
             Router: "/info/:bucketname",
             AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),

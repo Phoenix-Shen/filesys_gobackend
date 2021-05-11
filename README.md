@@ -29,6 +29,7 @@ accesskeysecret = *************<br>
 endpoint = oss-cn-hangzhou.aliyuncs.com<br>
 
 # 关于生成“昂首阔步地走”的API接口文档
+输入bee run -gendoc=true -downdoc=true<br>
 运行项目之后 在浏览器中输入 localhost:8080/swagger/# 就可以访问辣！
 
 

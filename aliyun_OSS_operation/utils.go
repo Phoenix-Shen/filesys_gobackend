@@ -174,14 +174,14 @@ func (o *OSSClient) GetInfo(bucketName string) map[string]string {
 		fmt.Println("Error:", err)
 		os.Exit(-1)
 	}
-	fmt.Println("BucketInfo.Location: ", res.BucketInfo.Location)
+	/*fmt.Println("BucketInfo.Location: ", res.BucketInfo.Location)
 	fmt.Println("BucketInfo.CreationDate: ", res.BucketInfo.CreationDate)
 	fmt.Println("BucketInfo.ACL: ", res.BucketInfo.ACL)
 	fmt.Println("BucketInfo.Owner: ", res.BucketInfo.Owner)
 	fmt.Println("BucketInfo.StorageClass: ", res.BucketInfo.StorageClass)
 	fmt.Println("BucketInfo.RedundancyType: ", res.BucketInfo.RedundancyType)
 	fmt.Println("BucketInfo.ExtranetEndpoint: ", res.BucketInfo.ExtranetEndpoint)
-	fmt.Println("BucketInfo.IntranetEndpoint: ", res.BucketInfo.IntranetEndpoint)
+	fmt.Println("BucketInfo.IntranetEndpoint: ", res.BucketInfo.IntranetEndpoint)*/
 	rtval := map[string]string{"BucketInfo.Location": res.BucketInfo.Location,
 		"BucketInfo.CreationDate":     res.BucketInfo.CreationDate.Local().String(),
 		"BucketInfo.ACL":              res.BucketInfo.ACL,
@@ -191,4 +191,13 @@ func (o *OSSClient) GetInfo(bucketName string) map[string]string {
 		"BucketInfo.ExtranetEndpoint": res.BucketInfo.ExtranetEndpoint,
 		"BucketInfo.IntranetEndpoint": res.BucketInfo.IntranetEndpoint}
 	return rtval
+}
+
+//获取bucket对象
+func (o *OSSClient) GetBucket(bucketName string) *oss.Bucket {
+	bucket, err := o.client.Bucket(bucketName)
+	if err != nil {
+		handleError(err)
+	}
+	return bucket
 }
