@@ -16,6 +16,8 @@ type FileSystemController struct {
 	beego.Controller
 }
 
+var bucketName = "go-api-proj"
+
 // @Title CreateBucket
 // @Description Create a Bucket
 // @Param	body		body 	string	 true		"bucketName for creation"
@@ -59,16 +61,21 @@ func (f *FileSystemController) UploadFile() {
 
 	if err != nil {
 		logs.Info("文件上传失败：", err.Error())
-		f.Ctx.WriteString("文件上传失败：" + err.Error())
+		f.Data["json"] = ("文件上传失败：" + err.Error())
 		return
 	}
-	fileNameOriginal := path.Base(h.Filename)
+	FullFileName := path.Base(h.Filename)
 	fileExt := path.Ext(h.Filename)
-	fileNameOriginal = strings.TrimSuffix(fileNameOriginal, fileExt)
-
-	fileName := time.Now().Format("2006-2-15-15-16-10-12")
+	fileNameWithoutExt := strings.TrimSuffix(FullFileName, fileExt)
+	fileName_Time := time.Now().Format("2006-2-15-15-16-10-12")
 	defer file.Close()
-	f.SaveToFile("uploadFile", "./cache/"+fileNameOriginal+"_"+fileName+fileExt)
+	f.SaveToFile("uploadFile", "./cache/"+fileNameWithoutExt+"_"+fileName_Time+fileExt)
 
-	f.Ctx.WriteString("上传成功！")
+	if aliyun_OSS_operation.Ossclient.UploadFile(bucketName, FullFileName, "./cache/"+fileNameWithoutExt+"_"+fileName_Time+fileExt) {
+		f.Data["json"] = ("上传成功！")
+	} else {
+
+		f.Data["json"] = ("上传失败！")
+	}
+	f.ServeJSON()
 }
