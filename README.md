@@ -13,7 +13,20 @@ git config --global --unset http.proxy
 
 # 使用方法
 在控制台中进入当前目录，输入go  run  main.go <br>
-或者使用bee工具，在控制台中输入bee run即可
+或者使用bee工具，在控制台中输入bee run即可<br>
+另外需要创建 conf/app.conf文件<br>
+在里面输入自己想要的设置：<br>
+
+appname = FileSys<br>
+httpport = 8080<br>
+runmode = dev<br>
+autorender = false<br>
+copyrequestbody = true<br>
+EnableDocs = true<br>
+sqlconn = <br>
+accesskeyid = *************<br>
+accesskeysecret = *************<br>
+endpoint = oss-cn-hangzhou.aliyuncs.com<br>
 
 # 关于生成“昂首阔步地走”的API接口文档
 运行项目之后 在浏览器中输入 localhost:8080/swagger/# 就可以访问辣！

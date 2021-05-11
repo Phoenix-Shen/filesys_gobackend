@@ -73,18 +73,20 @@ func (o *OSSClient) CreateBucket(bucketName string) bool {
 //bucketName 上传到哪个Bucket
 //objectName 上传文件到OSS时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg
 //localFileName 由本地文件路径加文件名包括后缀组成，例如/users/local/myfile.txt。
-func (o *OSSClient) UploadFile(bucketName string, objectName string, localFileName string) {
+func (o *OSSClient) UploadFile(bucketName string, objectName string, localFileName string) bool {
 	bucket, err := o.client.Bucket(bucketName)
 	if err != nil {
 		handleError(err)
+		return false
 	}
 
 	err = bucket.PutObjectFromFile(objectName, localFileName)
 
 	if err != nil {
 		handleError(err)
+		return false
 	}
-
+	return true
 }
 
 //下载文件
