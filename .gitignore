@@ -1,6 +1,7 @@
 cache
 conf
 *.exe
+*.exe~
 lastupdate.tmp
 swagger.zip
 swagger

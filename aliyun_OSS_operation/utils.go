@@ -204,3 +204,18 @@ func (o *OSSClient) GetBucket(bucketName string) *oss.Bucket {
 	}
 	return bucket
 }
+
+//查看对象是否存在
+func (o *OSSClient) IsExist(bucketName string, fileName string) bool {
+	bucket, err := o.client.Bucket(bucketName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(-1)
+	}
+	isExist, err := bucket.IsObjectExist(fileName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(-1)
+	}
+	return isExist
+}

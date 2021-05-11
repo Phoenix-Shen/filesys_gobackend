@@ -70,6 +70,7 @@ func (f *FileSystemController) UploadFile() {
 	if err != nil {
 		logs.Info("文件上传失败：", err.Error())
 		f.Data["json"] = ("文件上传失败：" + err.Error())
+		f.ServeJSON()
 		return
 	}
 	FullFileName := path.Base(h.Filename)
@@ -98,6 +99,7 @@ func (f *FileSystemController) GetFileList() {
 	bucketName := f.GetString(":bucketName")
 	//print("bucketName is :", bucketName)
 	filemap := aliyun_OSS_operation.Ossclient.ListFile(bucketName)
+	//以map形式返回数据
 	f.Data["json"] = filemap
 	f.ServeJSON()
 }
@@ -131,6 +133,7 @@ func (f *FileSystemController) DownloadFiles() {
 		fmt.Println("Error:", err)
 		os.Exit(-1)
 	}
+	//下载操作
 	//fmt.Println("data:", string(data))
 	f.Ctx.ResponseWriter.Header().Add("content-type", "application/octet-stream;charset=utf-8")
 	f.Ctx.ResponseWriter.Header().Add("Content-Disposition", "attachement;filename=\""+fileName+"\"")
@@ -147,10 +150,18 @@ func (f *FileSystemController) DownloadFiles() {
 func (f *FileSystemController) DeleteFile() {
 	fileName := f.GetString("fileName")
 	bucketName := f.GetString("bucketName")
-	result := aliyun_OSS_operation.Ossclient.DeleteFile(bucketName, fileName)
-	if result {
-		f.Ctx.WriteString("删除失败！")
+	var result bool
+	//判断文件存在否 然后再删除
+	if aliyun_OSS_operation.Ossclient.IsExist(bucketName, fileName) {
+		result = aliyun_OSS_operation.Ossclient.DeleteFile(bucketName, fileName)
+		if result {
+			f.Data["json"] = (fileName + "删除成功！")
+		} else {
+			f.Data["json"] = (fileName + "删除失败，给老子爬！")
+		}
 	} else {
-		f.Ctx.WriteString("删除成功！")
+		f.Data["json"] = bucketName + "下面的" + fileName + "不存在，给老子爬"
 	}
+
+	f.ServeJSON()
 }
