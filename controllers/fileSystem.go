@@ -87,7 +87,7 @@ func (f *FileSystemController) UploadFile() {
 
 // @Title GetFilesList
 // @Description get files by bucketname
-// @Param	bucketName		path 	string	true		"bucketname for "
+// @Param	bucketName		path 	string	true		"bucketname of the filelist"
 // @Success 200 {object} list.List
 // @Failure 403 :bucketName is empty
 // @router /getFileList/:bucketName [get]
@@ -101,3 +101,13 @@ func (f *FileSystemController) GetFileList() {
 
 // @Title DownloadFiles
 // @Descreption downloadfiles from speicified bucket
+// @Param	bucketName		query	string	true		"bucketname for download"
+// @Param   fileName        query   string  true        "file Name for download"
+// @Success 200 downloadLink
+// @Failure 403 :bucketName or filename error
+// @router /download [get]
+func (f *FileSystemController) DownloadFiles() {
+	fileName := f.GetString(":fileName")
+	bucketName := f.GetString(":bucketName")
+	print(fileName, bucketName)
+}
