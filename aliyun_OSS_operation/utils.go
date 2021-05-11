@@ -147,17 +147,20 @@ func (o *OSSClient) ListFile(bucketName string) map[string]*models.FileInfos {
 //params
 //bucketName 列举哪个bucket下面的文件
 //objectName 删除那个文件？ 表示删除OSS文件时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg。
-func (o *OSSClient) DeleteFile(bucketName string, objectName string) {
+func (o *OSSClient) DeleteFile(bucketName string, objectName string) bool {
 	// 获取存储空间。
 	bucket, err := o.client.Bucket(bucketName)
 	if err != nil {
 		handleError(err)
+		return false
 	}
 	// 删除文件。
 	err = bucket.DeleteObject(objectName)
 	if err != nil {
 		handleError(err)
+		return false
 	}
+	return true
 }
 
 //错误处理

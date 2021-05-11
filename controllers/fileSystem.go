@@ -136,3 +136,21 @@ func (f *FileSystemController) DownloadFiles() {
 	f.Ctx.ResponseWriter.Header().Add("Content-Disposition", "attachement;filename=\""+fileName+"\"")
 	f.Ctx.ResponseWriter.Write(data)
 }
+
+// @Title DownloadFiles
+// @Descreption downloadfiles from speicified bucket
+// @Param	bucketName		query	string	true		"bucketname for delete"
+// @Param   fileName        query   string  true        "file Name for delete"
+// @Success 200 delete Succeed
+// @Failure 403 :bucketName or filename error
+// @router /delete [get]
+func (f *FileSystemController) DeleteFile() {
+	fileName := f.GetString("fileName")
+	bucketName := f.GetString("bucketName")
+	result := aliyun_OSS_operation.Ossclient.DeleteFile(bucketName, fileName)
+	if result {
+		f.Ctx.WriteString("删除失败！")
+	} else {
+		f.Ctx.WriteString("删除成功！")
+	}
+}

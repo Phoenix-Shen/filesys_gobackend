@@ -5,7 +5,7 @@ Content-Type: application/json
     "bucketName":"test"
 }
 
-###getall method GET
+###get bucket info method GET
 
 GET http://127.0.0.1:8080/v1/FileSystem/info/go-api-proj
 
