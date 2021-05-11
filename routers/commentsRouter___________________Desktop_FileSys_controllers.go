@@ -18,15 +18,6 @@ func init() {
 
     beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
         beego.ControllerComments{
-            Method: "GetFileList",
-            Router: "/getFileList/:bucketName",
-            AllowHTTPMethods: []string{"get"},
-            MethodParams: param.Make(),
-            Filters: nil,
-            Params: nil})
-
-    beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
-        beego.ControllerComments{
             Method: "GetInfo",
             Router: "/info/:bucketname",
             AllowHTTPMethods: []string{"get"},

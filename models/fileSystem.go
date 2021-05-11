@@ -1,7 +1,16 @@
 package models
 
-type fileSystem struct {
-	bucketName   string
-	objectName   string
-	fileLocation string
+import "time"
+
+type FileSystem struct {
+	BucketName   string
+	ObjectName   string
+	FileLocation string
+}
+
+type FileInfos struct {
+	FileName         string
+	FileSize         int64
+	FileType         string
+	LastModifiedTime time.Time
 }

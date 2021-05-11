@@ -1,6 +1,7 @@
 package aliyun_OSS_operation
 
 import (
+	"FileSys/models"
 	"fmt"
 	"os"
 
@@ -110,21 +111,27 @@ func (o *OSSClient) DownloadFile(bucketName string, objectName string, downloade
 //列举文件 ls
 //params
 //bucketName 列举哪个bucket下面的文件
-func (o *OSSClient) ListFile(bucketName string) {
+//返回文件列表
+func (o *OSSClient) ListFile(bucketName string) map[string]*models.FileInfos {
 	bucket, err := o.client.Bucket(bucketName)
 	if err != nil {
 		handleError(err)
 	}
 	// 列举文件。
+	fileCollection := map[string]*models.FileInfos{}
+
 	marker := ""
 	for {
 		lsRes, err := bucket.ListObjects(oss.Marker(marker))
 		if err != nil {
 			handleError(err)
 		}
+		var tmp *models.FileInfos
 		// 打印列举文件，默认情况下一次返回100条记录。
 		for _, object := range lsRes.Objects {
-			fmt.Println("Bucket: ", object.Key)
+			tmp = &models.FileInfos{FileName: object.Key, FileSize: object.Size, FileType: object.Type, LastModifiedTime: object.LastModified}
+			fileCollection[object.Key] = tmp
+
 		}
 		if lsRes.IsTruncated {
 			marker = lsRes.NextMarker
@@ -132,6 +139,7 @@ func (o *OSSClient) ListFile(bucketName string) {
 			break
 		}
 	}
+	return fileCollection
 }
 
 //删除文件 阿里云主账号AccessKey拥有所有API的访问权限，风险很高。
@@ -160,7 +168,7 @@ func handleError(err error) {
 
 //获取存储空间的信息
 //https://help.aliyun.com/document_detail/145680.html?spm=a2c4g.11186623.6.1356.604743e1suvwE2
-func (o *OSSClient) GetInfo(bucketName string) {
+func (o *OSSClient) GetInfo(bucketName string) map[string]string {
 	res, err := o.client.GetBucketInfo(bucketName)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -174,4 +182,13 @@ func (o *OSSClient) GetInfo(bucketName string) {
 	fmt.Println("BucketInfo.RedundancyType: ", res.BucketInfo.RedundancyType)
 	fmt.Println("BucketInfo.ExtranetEndpoint: ", res.BucketInfo.ExtranetEndpoint)
 	fmt.Println("BucketInfo.IntranetEndpoint: ", res.BucketInfo.IntranetEndpoint)
+	rtval := map[string]string{"BucketInfo.Location": res.BucketInfo.Location,
+		"BucketInfo.CreationDate":     res.BucketInfo.CreationDate.Local().String(),
+		"BucketInfo.ACL":              res.BucketInfo.ACL,
+		"BucketInfo.Owner":            res.BucketInfo.Owner.DisplayName,
+		"BucketInfo.StorageClass":     res.BucketInfo.StorageClass,
+		"BucketInfo.RedundancyType":   res.BucketInfo.RedundancyType,
+		"BucketInfo.ExtranetEndpoint": res.BucketInfo.ExtranetEndpoint,
+		"BucketInfo.IntranetEndpoint": res.BucketInfo.IntranetEndpoint}
+	return rtval
 }
