@@ -25,6 +25,15 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
+        beego.ControllerComments{
+            Method: "UploadFile",
+            Router: "/uploadfile/",
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["FileSys/controllers:UserController"] = append(beego.GlobalControllerRouter["FileSys/controllers:UserController"],
         beego.ControllerComments{
             Method: "Post",

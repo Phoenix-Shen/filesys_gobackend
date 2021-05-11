@@ -3,7 +3,11 @@ package controllers
 import (
 	"FileSys/aliyun_OSS_operation"
 	"encoding/json"
+	"path"
+	"strings"
+	"time"
 
+	"github.com/beego/beego/v2/core/logs"
 	beego "github.com/beego/beego/v2/server/web"
 )
 
@@ -38,8 +42,33 @@ func (f *FileSystemController) Post() {
 // @router /info/:bucketname [get]
 func (f *FileSystemController) GetInfo() {
 	bucketName := f.GetString(":bucketname")
-	print("bucketName是", bucketName, "\n")
+	//print("bucketName是", bucketName, "\n")
 	aliyun_OSS_operation.Ossclient.GetInfo(bucketName)
 	f.Data["json"] = "succeed"
 	f.ServeJSON()
+}
+
+// @Title UploadFile
+// @Description upload a file
+// @Param uploadFile fromData multipart.file true "file you want to upload"
+// @Success 200 {string} upload succeed
+// @Failure 403 file is empty
+// @router /uploadfile/ [post]
+func (f *FileSystemController) UploadFile() {
+	file, h, err := f.GetFile("uploadFile")
+
+	if err != nil {
+		logs.Info("文件上传失败：", err.Error())
+		f.Ctx.WriteString("文件上传失败：" + err.Error())
+		return
+	}
+	fileNameOriginal := path.Base(h.Filename)
+	fileExt := path.Ext(h.Filename)
+	fileNameOriginal = strings.TrimSuffix(fileNameOriginal, fileExt)
+
+	fileName := time.Now().Format("2006-2-15-15-16-10-12")
+	defer file.Close()
+	f.SaveToFile("uploadFile", "./cache/"+fileNameOriginal+"_"+fileName+fileExt)
+
+	f.Ctx.WriteString("上传成功！")
 }

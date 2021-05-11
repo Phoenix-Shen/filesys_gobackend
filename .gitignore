@@ -1,1 +1,4 @@
-*.exe
+cache
+conf
+FileSys.exe
+lastupdate.tmp
