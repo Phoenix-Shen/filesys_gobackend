@@ -12,3 +12,6 @@ GET http://127.0.0.1:8080/v1/FileSystem/info/go-api-proj
 
 ###getfilelist method get
 GET http://127.0.0.1:8080/v1/FileSystem/getFileList/go-api-proj HTTP/1.1
+
+###download
+GET http://127.0.0.1:8080/v1/FileSystem/download?fileName=filename&bucketName=bucketName HTTP/1.1
