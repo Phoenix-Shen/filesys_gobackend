@@ -14,7 +14,7 @@ GET http://127.0.0.1:8080/v1/FileSystem/info/go-api-proj
 GET http://127.0.0.1:8080/v1/FileSystem/getFileList/go-api-proj HTTP/1.1
 
 ###download
-GET http://127.0.0.1:8080/v1/FileSystem/download?fileName=MLPR 第10讲 特征提取-2021-04-30-New.pdf&bucketName=go-api-proj HTTP/1.1
+GET http://127.0.0.1:8080/v1/FileSystem/download?fileName=SEMZ]CMXML@4ZO%{@B1M%V2.jpg&bucketName=go-api-proj HTTP/1.1
 
 ###delete
-GET http://127.0.0.1:8080/v1/FileSystem/delete?fileName=asdf.pdf&bucketName=go-api-proj HTTP/1.1
+GET http://127.0.0.1:8080/v1/FileSystem/delete?fileName=SEMZ]CMXML@4ZO%{@B1M%V2.jpg&bucketName=go-api-proj HTTP/1.1
