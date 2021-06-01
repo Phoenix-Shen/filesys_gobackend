@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -30,11 +29,11 @@ var defaultbucketName = "go-api-proj"
 func (f *FileSystemController) Post() {
 	var bucketName string
 	json.Unmarshal(f.Ctx.Input.RequestBody, &bucketName)
-	result := aliyun_OSS_operation.Ossclient.CreateBucket(bucketName)
+	result, err := aliyun_OSS_operation.Ossclient.CreateBucket(bucketName)
 	if !result {
-		f.Data["json"] = "creation failed"
+		f.Data["json"] = "creation failed" + err.Error()
 	} else {
-		f.Data["json"] = "creation succeed"
+		f.Data["json"] = "creation succeed" + err.Error()
 	}
 	f.ServeJSON()
 }
@@ -122,7 +121,7 @@ func (f *FileSystemController) DownloadFiles() {
 	body, err := bucket.GetObject(fileName)
 	if err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(-1)
+		//os.Exit(-1)
 	}
 
 	// 数据读取完成后，获取的流必须关闭，否则会造成连接泄漏，导致请求无连接可用，程序无法正常工作。
@@ -131,7 +130,7 @@ func (f *FileSystemController) DownloadFiles() {
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(-1)
+		//os.Exit(-1)
 	}
 	//下载操作
 	//fmt.Println("data:", string(data))

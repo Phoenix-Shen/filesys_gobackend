@@ -28,9 +28,9 @@ func init() {
 	endpoint, _ := web.AppConfig.String("endpoint")
 	accesskeyid, _ := web.AppConfig.String("accesskeyid")
 	accesskeysecret, _ := web.AppConfig.String("accesskeysecret")
-	logs.Info("read endpoint :", endpoint)
-	logs.Info("accesskeyid :", accesskeyid)
-	logs.Info("accesskeysecret :", accesskeysecret)
+	//logs.Info("read endpoint :", endpoint)
+	//logs.Info("accesskeyid :", accesskeyid)
+	//logs.Info("accesskeysecret :", accesskeysecret)
 	Ossclient = OSSClient{
 		//杭州 华东1节点 ID：oss-cn-hangzhou
 		endPoint:        endpoint,
@@ -49,24 +49,26 @@ func init() {
 }
 
 //创建bucket，bucket的命名应该要有规范，需要在前端限制
-func (o *OSSClient) CreateBucket(bucketName string) bool {
+func (o *OSSClient) CreateBucket(bucketName string) (bool, error) {
 	isExist, err := o.client.IsBucketExist(bucketName)
 
 	if err != nil {
 		handleError(err)
+		return false, err
 	}
 
 	if isExist {
 		logs.Info("bucket aleady exists")
-		return false
+		return false, err
 	}
 
 	err = o.client.CreateBucket(bucketName)
 	if err != nil {
 		handleError(err)
+		return false, err
 	}
 
-	return true
+	return true, nil
 }
 
 //上传文件
@@ -166,7 +168,7 @@ func (o *OSSClient) DeleteFile(bucketName string, objectName string) bool {
 //错误处理
 func handleError(err error) {
 	logs.Info("error encountered：", err.Error())
-	os.Exit(-1)
+	//os.Exit(-1)
 }
 
 //获取存储空间的信息
