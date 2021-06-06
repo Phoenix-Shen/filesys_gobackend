@@ -2,6 +2,7 @@ package aliyun_OSS_operation
 
 import (
 	"FileSys/models"
+	"errors"
 	"fmt"
 	"os"
 
@@ -76,20 +77,25 @@ func (o *OSSClient) CreateBucket(bucketName string) (bool, error) {
 //bucketName 上传到哪个Bucket
 //objectName 上传文件到OSS时需要指定包含文件后缀在内的完整路径，例如abc/efg/123.jpg
 //localFileName 由本地文件路径加文件名包括后缀组成，例如/users/local/myfile.txt。
-func (o *OSSClient) UploadFile(bucketName string, objectName string, localFileName string) bool {
+func (o *OSSClient) UploadFile(bucketName string, objectName string, localFileName string) (bool, error) {
 	bucket, err := o.client.Bucket(bucketName)
 	if err != nil {
 		handleError(err)
-		return false
+		return false, err
 	}
 
-	err = bucket.PutObjectFromFile(objectName, localFileName)
+	if o.IsExist(bucketName, objectName) {
+		handleError(errors.New("duplicate fileName"))
+		return false, errors.New("Error:文件名重复")
+	}
+	forbidOverwirte := oss.ForbidOverWrite(true)
+	err = bucket.PutObjectFromFile(objectName, localFileName, forbidOverwirte)
 
 	if err != nil {
 		handleError(err)
-		return false
+		return false, err
 	}
-	return true
+	return true, nil
 }
 
 //下载文件
@@ -124,9 +130,10 @@ func (o *OSSClient) ListFile(bucketName string) map[string]*models.FileInfos {
 
 	marker := ""
 	for {
-		lsRes, err := bucket.ListObjects(oss.Marker(marker))
+		lsRes, err := bucket.ListObjects(oss.Marker(marker), oss.MaxKeys(1000))
 		if err != nil {
 			handleError(err)
+			return nil
 		}
 		var tmp *models.FileInfos
 		// 打印列举文件，默认情况下一次返回100条记录。
@@ -167,7 +174,7 @@ func (o *OSSClient) DeleteFile(bucketName string, objectName string) bool {
 
 //错误处理
 func handleError(err error) {
-	logs.Info("error encountered：", err.Error())
+	logs.Info("Error encountered：", err.Error())
 	//os.Exit(-1)
 }
 
@@ -220,4 +227,58 @@ func (o *OSSClient) IsExist(bucketName string, fileName string) bool {
 		os.Exit(-1)
 	}
 	return isExist
+}
+
+//列举指定前缀的存储空间
+//以下代码用于列举包含指定前缀（prefix）的存储空间：
+func (o *OSSClient) ListPrefix(bucketName string, prefix string) (map[string]*models.FileInfos, error) {
+	bucket, err := o.client.Bucket(bucketName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return nil, err
+	}
+
+	fileCollection := map[string]*models.FileInfos{}
+	marker := ""
+	for {
+		lsRes, err := bucket.ListObjects(oss.Marker(marker), oss.MaxKeys(1000), oss.Prefix(prefix))
+		if err != nil {
+			handleError(err)
+			return nil, err
+		}
+		var tmp *models.FileInfos
+		// 打印列举文件，默认情况下一次返回100条记录。
+		for _, object := range lsRes.Objects {
+			tmp = &models.FileInfos{FileName: object.Key, FileSize: object.Size, FileType: object.Type, LastModifiedTime: object.LastModified}
+			fileCollection[object.Key] = tmp
+
+		}
+		if lsRes.IsTruncated {
+			marker = lsRes.NextMarker
+		} else {
+			break
+		}
+	}
+	return fileCollection, nil
+}
+
+//文件重命名
+//先拷贝再删除
+func (o *OSSClient) RenameFile(bucketName string, oldName string, newName string) error {
+	bucket, err := o.client.Bucket(bucketName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return err
+	}
+
+	_, err = bucket.CopyObject(oldName, newName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return err
+	}
+
+	if !o.DeleteFile(bucketName, oldName) {
+		return errors.New("delete file failed")
+	}
+	return nil
 }
