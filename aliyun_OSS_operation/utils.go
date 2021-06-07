@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/beego/beego/v2/core/logs"
@@ -29,15 +30,18 @@ func init() {
 	endpoint, _ := web.AppConfig.String("endpoint")
 	accesskeyid, _ := web.AppConfig.String("accesskeyid")
 	accesskeysecret, _ := web.AppConfig.String("accesskeysecret")
+	//控制台输出密码就是找死
 	//logs.Info("read endpoint :", endpoint)
 	//logs.Info("accesskeyid :", accesskeyid)
 	//logs.Info("accesskeysecret :", accesskeysecret)
+
 	Ossclient = OSSClient{
 		//杭州 华东1节点 ID：oss-cn-hangzhou
 		endPoint:        endpoint,
 		accessKeyID:     accesskeyid,
 		accessKeySecret: accesskeysecret,
 	}
+
 	//新建客户端 在这里没有填写option 可以查看oss.clientoption中有哪些成员
 	var err error
 	Ossclient.client, err = oss.New(Ossclient.endPoint, Ossclient.accessKeyID, Ossclient.accessKeySecret)
@@ -46,6 +50,8 @@ func init() {
 		fmt.Println("Error:", err)
 		//os.Exit(-1)
 	}
+	//读取文件配置
+	models.FileRules = models.InitFileConfig("./conf/rules.conf")
 	logs.Info("OSS client OK!")
 }
 
@@ -60,7 +66,7 @@ func (o *OSSClient) CreateBucket(bucketName string) (bool, error) {
 
 	if isExist {
 		logs.Info("bucket aleady exists")
-		return false, err
+		return false, errors.New("bucket already exists")
 	}
 
 	err = o.client.CreateBucket(bucketName)
@@ -138,9 +144,15 @@ func (o *OSSClient) ListFile(bucketName string) map[string]*models.FileInfos {
 		var tmp *models.FileInfos
 		// 打印列举文件，默认情况下一次返回100条记录。
 		for _, object := range lsRes.Objects {
-			tmp = &models.FileInfos{FileName: object.Key, FileSize: object.Size, FileType: object.Type, LastModifiedTime: object.LastModified}
-			fileCollection[object.Key] = tmp
-
+			fileExt := path.Ext(object.Key)
+			if fileExt != ".keep" {
+				fileClass, ok := models.FileRules[fileExt]
+				if !ok {
+					fileClass = fileExt
+				}
+				tmp = &models.FileInfos{FileName: object.Key, FileSize: object.Size, FileType: fileClass, LastModifiedTime: object.LastModified}
+				fileCollection[object.Key] = tmp
+			}
 		}
 		if lsRes.IsTruncated {
 			marker = lsRes.NextMarker
@@ -249,8 +261,15 @@ func (o *OSSClient) ListPrefix(bucketName string, prefix string) (map[string]*mo
 		var tmp *models.FileInfos
 		// 打印列举文件，默认情况下一次返回100条记录。
 		for _, object := range lsRes.Objects {
-			tmp = &models.FileInfos{FileName: object.Key, FileSize: object.Size, FileType: object.Type, LastModifiedTime: object.LastModified}
-			fileCollection[object.Key] = tmp
+			fileExt := path.Ext(object.Key)
+			if fileExt != ".keep" {
+				fileClass, ok := models.FileRules[fileExt]
+				if !ok {
+					fileClass = fileExt
+				}
+				tmp = &models.FileInfos{FileName: object.Key, FileSize: object.Size, FileType: fileClass, LastModifiedTime: object.LastModified}
+				fileCollection[object.Key] = tmp
+			}
 
 		}
 		if lsRes.IsTruncated {
@@ -281,4 +300,92 @@ func (o *OSSClient) RenameFile(bucketName string, oldName string, newName string
 		return errors.New("delete file failed")
 	}
 	return nil
+}
+
+//列举指定目录下所有子目录的信息
+func (o *OSSClient) ListDirInfo(bucketName string, dirName string) ([]string, error) {
+	bucket, err := o.client.Bucket(bucketName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return nil, err
+	}
+	dirInfo := []string{}
+
+	marker := oss.Marker("")
+	prefix := oss.Prefix(dirName)
+	for {
+		lor, err := bucket.ListObjects(marker, prefix, oss.Delimiter("/"))
+		if err != nil {
+			fmt.Println("Error:", err)
+			return nil, err
+		}
+
+		/*for _, dirName := range lor.CommonPrefixes {
+			dirInfo = append(dirInfo, dirName)
+		}*/
+		dirInfo = append(dirInfo, lor.CommonPrefixes...)
+		prefix = oss.Prefix(lor.Prefix)
+		marker = oss.Marker(lor.NextMarker)
+		if !lor.IsTruncated {
+			break
+		}
+	}
+	return dirInfo, nil
+}
+
+//创建文件夹
+func (o *OSSClient) CreateFolder(bucketName string, dirName string) (bool, error) {
+	var err error
+	var res bool
+	if res, err = o.UploadFile(bucketName, path.Join(dirName, ".keep"), "./.keep"); res {
+		return true, nil
+	}
+	return false, err
+}
+
+//删除文件夹
+func (o *OSSClient) DeleteFolder(bucketName string, dirName string) (bool, error) {
+
+	bucket, err := o.client.Bucket(bucketName)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false, err
+	}
+	// 列举所有包含指定前缀的文件并删除。
+	marker := oss.Marker("")
+	prefix := oss.Prefix(dirName)
+	count := 0
+	for {
+		lor, err := bucket.ListObjects(marker, prefix)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return false, err
+		}
+
+		objects := []string{}
+		for _, object := range lor.Objects {
+			objects = append(objects, object.Key)
+		}
+
+		delRes, err := bucket.DeleteObjects(objects, oss.DeleteObjectsQuiet(true))
+		if err != nil {
+			fmt.Println("Error:", err)
+			return false, err
+		}
+
+		if len(delRes.DeletedObjects) > 0 {
+			fmt.Println("these objects deleted failure,", delRes.DeletedObjects)
+			return false, errors.New("deleted failure")
+		}
+
+		count += len(objects)
+
+		prefix = oss.Prefix(lor.Prefix)
+		marker = oss.Marker(lor.NextMarker)
+		if !lor.IsTruncated {
+			break
+		}
+	}
+	return true, nil
+
 }

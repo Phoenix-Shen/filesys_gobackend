@@ -9,9 +9,36 @@ func init() {
 
     beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
         beego.ControllerComments{
-            Method: "Post",
+            Method: "CreateBucket",
             Router: "/",
-            AllowHTTPMethods: []string{"post"},
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
+        beego.ControllerComments{
+            Method: "CreateFolder",
+            Router: "/CreateFolder/:bucketName",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
+        beego.ControllerComments{
+            Method: "DeleteFolder",
+            Router: "/DeleteFolder/:bucketName",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
+        beego.ControllerComments{
+            Method: "ListDirInfo",
+            Router: "/ListDirInfo/:bucketName",
+            AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})
@@ -29,7 +56,7 @@ func init() {
         beego.ControllerComments{
             Method: "DeleteFile",
             Router: "/delete",
-            AllowHTTPMethods: []string{"get"},
+            AllowHTTPMethods: []string{"post"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})
@@ -55,7 +82,7 @@ func init() {
     beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"] = append(beego.GlobalControllerRouter["FileSys/controllers:FileSystemController"],
         beego.ControllerComments{
             Method: "ListPrefix",
-            Router: "/getFileWithPrefix/:bucketName/:prefix",
+            Router: "/getFileWithPrefix/:bucketName/",
             AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),
             Filters: nil,

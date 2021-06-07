@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"FileSys/aliyun_OSS_operation"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -22,18 +21,19 @@ var defaultbucketName = "go-api-proj"
 
 // @Title CreateBucket
 // @Description Create a Bucket
-// @Param	body		body 	string	 true		"bucketName for creation"
+// @Param	bucketName		query 	string	 true		"bucketName for creation"
 // @Success 200 create succeed
 // @Failure 403 body is empty
-// @router / [post]
-func (f *FileSystemController) Post() {
-	var bucketName string
-	json.Unmarshal(f.Ctx.Input.RequestBody, &bucketName)
+// @router / [get]
+func (f *FileSystemController) CreateBucket() {
+
+	//json.Unmarshal(f.Ctx.Input.RequestBody, &bucketName)
+	bucketName := f.GetString("bucketName")
 	result, err := aliyun_OSS_operation.Ossclient.CreateBucket(bucketName)
 	if !result {
-		f.Data["json"] = "Error :" + "creation failed" + err.Error()
+		f.Data["json"] = "Error :" + "creation failed " + err.Error()
 	} else {
-		f.Data["json"] = "Error :" + "creation succeed" + err.Error()
+		f.Data["json"] = "Error :" + "creation succeed "
 	}
 	f.ServeJSON()
 }
@@ -56,12 +56,14 @@ func (f *FileSystemController) GetBucketInfo() {
 // @Description upload a file
 // @Param uploadFile formData multipart.file true "file you want to upload"
 // @Param bucketName formData string true "bucketName you want to upload"
+// @Param filePath   formData string true "file path"
 // @Success 200 {string} upload succeed
 // @Failure 403 file is empty
 // @router /uploadfile/ [post]
 func (f *FileSystemController) UploadFile() {
 	file, h, err := f.GetFile("uploadFile")
 	bucketName := f.GetString("bucketName")
+	filepath := f.GetString("filePath")
 	if bucketName == "" {
 		logs.Info("检测到您的BucketName为空，自动设置为go-api-proj")
 		bucketName = defaultbucketName
@@ -79,7 +81,7 @@ func (f *FileSystemController) UploadFile() {
 	defer file.Close()
 	f.SaveToFile("uploadFile", "./cache/"+fileNameWithoutExt+"_"+fileName_Time+fileExt)
 
-	if succeed, err := aliyun_OSS_operation.Ossclient.UploadFile(bucketName, FullFileName, "./cache/"+fileNameWithoutExt+"_"+fileName_Time+fileExt); succeed {
+	if succeed, err := aliyun_OSS_operation.Ossclient.UploadFile(bucketName, path.Join(filepath, FullFileName), "./cache/"+fileNameWithoutExt+"_"+fileName_Time+fileExt); succeed {
 		f.Data["json"] = (FullFileName + "上传成功！")
 	} else {
 
@@ -106,13 +108,13 @@ func (f *FileSystemController) GetFileList() {
 // @Title ListPrefix
 // @Description get files by bucketname that maches the prefix
 // @Param	bucketName		path 	string	true	"bucketname of the filelist"
-// @Param	prefix		    path 	string	true	"prefix"
+// @Param	prefix		    query 	string	true	"prefix"
 // @Success 200 list.List
 // @Failure 403 :bucketName is empty or prefix is empty
-// @router /getFileWithPrefix/:bucketName/:prefix [get]
+// @router /getFileWithPrefix/:bucketName/ [get]
 func (f *FileSystemController) ListPrefix() {
 	bucketName := f.GetString(":bucketName")
-	prefix := f.GetString(":prefix")
+	prefix := f.GetString("prefix")
 	//print("bucketName is :", bucketName)
 	filemap, err := aliyun_OSS_operation.Ossclient.ListPrefix(bucketName, prefix)
 	if err != nil {
@@ -167,11 +169,11 @@ func (f *FileSystemController) DownloadFiles() {
 
 // @Title DeleteFiles
 // @Descreption DeleteFiles from speicified bucket
-// @Param	bucketName		query	string	true		"bucketname for delete"
-// @Param   fileName        query   string  true        "file Name for delete"
+// @Param	bucketName		form-data	string	true		"bucketname for delete"
+// @Param   fileName        form-data   string  true        "file Name for delete"
 // @Success 200 delete Succeed
 // @Failure 403 :bucketName or filename error
-// @router /delete [get]
+// @router /delete [post]
 func (f *FileSystemController) DeleteFile() {
 	fileName := f.GetString("fileName")
 	bucketName := f.GetString("bucketName")
@@ -211,4 +213,65 @@ func (f *FileSystemController) RenameFiles() {
 		f.Data["json"] = "succeed"
 	}
 	f.ServeJSON()
+}
+
+// @Title ListDirInfo
+// @Descreption 列举指定目录下所有子目录的信息
+// @Param	bucketName	       path	   string  true		   "bucketname for rename"
+// @Param   dirName            query   string  true        "oldfile Name for rename"
+// @Success 200 rename Succeed
+// @Failure 403 :bucketName or dirname error
+// @router /ListDirInfo/:bucketName [get]
+func (f *FileSystemController) ListDirInfo() {
+	bucketName := f.GetString(":bucketName")
+	dirName := f.GetString("dirName")
+	dirInfo, err := aliyun_OSS_operation.Ossclient.ListDirInfo(bucketName, dirName)
+	if err != nil {
+		f.Data["json"] = err.Error()
+	} else {
+		f.Data["json"] = dirInfo
+	}
+	f.ServeJSON()
+}
+
+// @Title CreateFolder
+// @Descreption 创建文件夹
+// @Param	bucketName	       path	   string  true		   "bucketname for create"
+// @Param   dirName            query   string  true        "dir Name for create"
+// @Success 200 create Succeed
+// @Failure 403 :bucketName or dirname error
+// @router /CreateFolder/:bucketName [get]
+func (f *FileSystemController) CreateFolder() {
+	bucketName := f.GetString(":bucketName")
+	dirName := f.GetString("dirName")
+	var err error
+	var res bool
+	if res, err = aliyun_OSS_operation.Ossclient.CreateFolder(bucketName, dirName); res {
+		f.Data["json"] = "crete folder succeed"
+	} else {
+		f.Data["json"] = err.Error()
+	}
+	f.ServeJSON()
+
+}
+
+// @Title DeleteFolder
+// @Descreption 创建文件夹
+// @Param	bucketName	       path	   string  true		   "bucketname for Delete"
+// @Param   dirName            query   string  true        "dir Name for Delete"
+// @Success 200 Delete Succeed
+// @Failure 403 :bucketName or dirname error
+// @router /DeleteFolder/:bucketName [get]
+func (f *FileSystemController) DeleteFolder() {
+	bucketName := f.GetString(":bucketName")
+	dirName := f.GetString("dirName")
+	var err error
+	var res bool
+	if res, err = aliyun_OSS_operation.Ossclient.DeleteFolder(bucketName, dirName); res {
+		f.Data["json"] = "delete folder succeed"
+	} else {
+		f.Data["json"] = err.Error()
+	}
+	f.ServeJSON()
+
 }
